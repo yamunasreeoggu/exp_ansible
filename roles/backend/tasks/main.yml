@@ -1,0 +1,41 @@
+- name: Set Hostname & Disable NodeJS 10 Version
+  ansible.builtin.shell: set-hostname backend ; dnf module disable nodejs -y ; dnf module enable nodejs:18 -y
+
+- name: Install NodeJS
+  ansible.builtin.dnf:
+    name: nodejs
+    state: installed
+
+- name: Add Application User
+  ansible.builtin.user:
+    name: expense
+
+- name: Include App Pre-requisites
+  ansible.builtin.import_role:
+    name: common
+    tasks_from: app-prereq.yml
+
+- name: Install NodeJS dependencies
+  ansible.builtin.shell: npm install
+
+- name: Copy backend config file
+  ansible.builtin.template:
+    src: backend.service
+    dest: /etc/systemd/system/backend.service
+
+- name: Start Backend Service
+  ansible.builtin.systemd:
+    name: backend
+    state: restarted
+    enabled: yes
+    daemon-reload: yes
+
+- name: Install mysql client
+  ansible.builtin.dnf:
+    name: mysql
+    state: installed
+
+- name: Load Schema
+  ansible.builtin.shell: mysql -h {{ lookup('aws_ssm', 'expense.backend.DB_HOST', region='us-east-1' ) }} -u{{ lookup('aws_ssm', 'expense.mysql.DB_USER', region='us-east-1' ) }} -p{{ lookup('aws_ssm', 'expense.mysql.DB_PASS', region='us-east-1' ) }} < /app/schema/backend.sql
+
+

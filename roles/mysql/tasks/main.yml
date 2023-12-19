@@ -7,7 +7,9 @@
     dest: /etc/yum.repos.d/mysql.repo
 
 - name: Install MySQL Server
-  ansible.builtin.shell: dnf install mysql-community-server -y
+  ansible.builtin.dnf:
+    name : mysql-community-server
+    state: installed
 
 - name: Start MySQL Service
   ansible.builtin.systemd:
