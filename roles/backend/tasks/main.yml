@@ -1,10 +1,20 @@
-- name: Set Hostname & Disable NodeJS 10 Version
-  ansible.builtin.shell: set-hostname backend ; dnf module disable nodejs -y ; dnf module enable nodejs:18 -y
+- name: Set Hostname
+  ansible.builtin.shell: set-hostname backend
+
+- name: Verify NodeJS
+  ansible.builtin.shell: type npm
+  register: npm
+  ignore_errors: yes
+
+- name: Disable NodeJS 10 Version
+  ansible.builtin.shell: dnf module disable nodejs -y ; dnf module enable nodejs:18 -y
+  when: npm.rc != 0
 
 - name: Install NodeJS
   ansible.builtin.dnf:
     name: nodejs
     state: installed
+  when: npm.rc != 0
 
 - name: Add Application User
   ansible.builtin.user:
